@@ -1,7 +1,10 @@
-import re
-a = "123"
-b = "123"
-is_num = re.match(r"\d+$",a)
-is_num_1 = re.match(r"\d+$",b)
-if is_num and is_num_1:
-    print 1
+f = open("as_links_rel_ori.txt", 'r')
+f1 = open("as_links_rel.txt", 'w')
+i = 0
+for line in f:
+    f1.write(line)
+    i += 1
+    if i == 10000:
+        break
+f.close()
+f1.close()
