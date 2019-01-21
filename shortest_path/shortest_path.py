@@ -82,10 +82,10 @@ def get_input_file(as_rel_f, as_link_f, out_file):
     link_f.close()
     out_f.close()
 
-def get_graph():
+def get_graph(file_name):
     global G
     G = nx.Graph()
-    f = open("as_links_rel.txt")
+    f = open(file_name, 'r')
     for line in f:
         cut = line.strip().split()
         as1 = cut[0]
@@ -93,6 +93,7 @@ def get_graph():
         rel = cut[2]
         G.add_edge(int(as1), int(as2), r = rel)
     f.close()
+    # print list(nx.all_neighbors(G, 174))
     # print G.edges(data=True)
     # print [G[684119][174]["r"]]
 
@@ -118,6 +119,14 @@ def is_valley_free(path):
             p2c = 1
     return valley_free
 
+def list2str(path):
+    s = ''
+    if len(path) == 0:
+        return s
+    for node in path:
+        s = s + str(node) + ' '
+    return s[:-1]
+
 def get_shortest_path(as1, as2):
     as1 = int(as1)
     as2 = int(as2)
@@ -132,53 +141,141 @@ def get_shortest_path(as1, as2):
     print "get shortest path"
     ret_path = set()
     shortest_paths = list(nx.all_shortest_paths(G, source=as1, target=as2))
-    print len(shortest_paths)
-    print len(shortest_paths[0])
-    for path in shortest_paths:
-        print path
+    # for path in shortest_paths:
+    #     print path
+    # return len(shortest_paths)
+    # print len(shortest_paths[0])
     for path in shortest_paths:
         if is_valley_free(path):
-            ret_path.add(path)
+            ret_path.add(list2str(path))
     if len(ret_path) != 0:
         return ret_path
     else:
-        print "all shortest paths are not valley-free"
-        # if shortest paths is not valley-free
-        # get all simple paths from short to long
-        print "get all simple paths"
-        all_simple_paths = list(nx.all_simple_paths(G, source=as1, target=as2, cutoff=10))
-        print len(all_simple_paths)
-        all_simple_paths.sort(cmp=comprae_len)
-        shortest_valley_free_len = 0
-        for path in all_simple_paths:
-            if shortest_valley_free_len == 0:
-                if is_valley_free(path):
-                    shortest_valley_free_len = len(path)
-                    ret_path.add(path)
-            else:
-                if len(path) > shortest_valley_free_len:
-                    break
-                else:
-                    if len(path) == shortest_valley_free_len:
-                        if is_valley_free(path):
-                            ret_path.add(path)
+        return "shortest paths not valley-free"
+    # if len(ret_path) != 0:
+    #     return ret_path
+    # else:
+    #     print "all shortest paths are not valley-free"
+    #     # if shortest paths is not valley-free
+    #     # get all simple paths from short to long
+    #     print "get all simple paths"
+    #     all_simple_paths = list(nx.all_simple_paths(G, source=as1, target=as2, cutoff=10))
+    #     print len(all_simple_paths)
+    #     all_simple_paths.sort(cmp=comprae_len)
+    #     shortest_valley_free_len = 0
+    #     for path in all_simple_paths:
+    #         if shortest_valley_free_len == 0:
+    #             if is_valley_free(path):
+    #                 shortest_valley_free_len = len(path)
+    #                 ret_path.add(path)
+    #         else:
+    #             if len(path) > shortest_valley_free_len:
+    #                 break
+    #             else:
+    #                 if len(path) == shortest_valley_free_len:
+    #                     if is_valley_free(path):
+    #                         ret_path.add(path)
 
-        if shortest_valley_free_len != 0:
-            return ret_path
-        else:
-            #if all simple paths is not valley-free
-            return "has_no_path"
+    #     if shortest_valley_free_len != 0:
+    #         return ret_path
+    #     else:
+    #         #if all simple paths is not valley-free
+    #         return "has_no_path"
+def after_add_valley_f(now, i):
+    pre_node = prevPoints[now]
+    if pre_node == "src":
+        return True
+    all_path = []
+    for pre in pre_node:
+        all_path.append([pre, now, i])
+    have_valley_free = 0
+    for path in all_path:
+        if  is_valley_free(path):
+            have_valley_free = 1
+    if have_valley_free == 0:
+        return False
+    else:
+        return True
+
+def bfs(src, dst):
+    global prevPoints
+    distance = {}
+    prevPoints = {}
+    prevPoints[src] = "src"
+    path = {}
+    path[src] = 1
+    queue = []
+    queue.append(src)
+    while len(queue) != 0:
+        now = queue.pop(0)
+        if now not in distance:
+            distance[now] = 0
+        dis = distance[now] + 1
+        for i in list(nx.all_neighbors(G, now)):
+            if i not in distance:
+                distance[i] = 0
+            if (distance[i] == 0 and after_add_valley_f(now,i)) or (distance[i] > dis and after_add_valley_f(now,i)):
+                distance[i] = dis
+                if i not in path:
+                    path[i] = 0
+                if now not in path:
+                    path[now] = 0
+                path[i] = path[now]
+                queue.append(i)
+                prevPoints[i] = []
+                prevPoints[i].append(now)
+            elif i in distance:
+                if (distance[i] == dis and after_add_valley_f(now,i)):
+                    if i not in path:
+                        path[i] = 0
+                    if now not in path:
+                        path[now] = 0
+                    path[i] += path[now]
+                    if i not in prevPoints:
+                        prevPoints[i] = []
+                    prevPoints[i].append(now)
+
+def getPaths(start, index):
+    childPaths = []
+    midPaths = []
+    if index != start:
+        for i in range(len(prevPoints[index])):
+            childPaths = getPaths(start, prevPoints[index][i])
+            for j in range(len(childPaths)):
+                childPaths[j].append(index)
+            if len(midPaths) == 0:
+                midPaths = childPaths
+            else:
+                for node in childPaths:
+                    midPaths.append(node)
+    else:
+        midPaths.append([start])
+    return midPaths
+
+def return_valley_free_path(path_list):
+    all = []
+    for path in path_list:
+        if is_valley_free(path):
+            all.append(path)
+    if len(all) != 0:
+        return all
+    else:
+        return "no result"
 
 def main(as1, as2):
-    # get_input_file("as_rel.txt", "all_links.txt", "as_links_rel.txt")
-    get_graph()
-    print "graph creat finish"
-    ret = get_shortest_path(as1,as2)
-    if ret == "has_no_path":
-        print ret
-    else:
-        print len(ret)
+    as1 = int(as1)
+    as2 = int(as2)
+    # get_input_file("as_rel.txt", "all_links.txt", "as_links_rel_ori.txt")
+    get_graph("as_links_rel_ori.txt")
+    all_path = get_shortest_path(as1, as2)
+    print all_path
+    if type(all_path) == str:
+    # if 1:
+        bfs(as1, as2)
+        all_path = return_valley_free_path(getPaths(as1, as2))
+    print all_path
+  
 
 if __name__ == "__main__":
     G = nx.Graph()
-    main(12414, 7500)
+    main(12307, 7500)
