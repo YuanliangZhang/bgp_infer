@@ -211,7 +211,25 @@ def bfs(src, dst):
         if now not in distance:
             distance[now] = 0
         dis = distance[now] + 1
-        for i in list(nx.all_neighbors(G, now)):
+        all_neighbor = list(nx.all_neighbors(G, now))
+        custom = []
+        provide = []
+        peer = []
+        neighbor_queue = []
+        for neighbor in all_neighbor:
+            if G[now][neighbor]["r"] == 'p2c':
+                custom.append(neighbor)
+            if G[now][neighbor]["r"] == 'c2p':
+                provide.append(neighbor)
+            if G[now][neighbor]["r"] == 'p2p':
+                peer.append(neighbor)
+        for c in custom:
+            neighbor_queue.append(c)
+        for p in provide:
+            neighbor_queue.append(p)
+        for p in peer:
+            neighbor_queue.append(p)
+        for i in neighbor_queue:
             if i not in distance:
                 distance[i] = 0
             if (distance[i] == 0 and after_add_valley_f(now,i)) or (distance[i] > dis and after_add_valley_f(now,i)):
