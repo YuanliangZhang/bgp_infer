@@ -199,6 +199,8 @@ def after_add_valley_f(now, i):
 
 def bfs(src, dst):
     global prevPoints
+    if (not G.has_node(src)) or (not G.has_node(dst)):
+        return False
     distance = {}
     prevPoints = {}
     prevPoints[src] = "src"
@@ -252,7 +254,7 @@ def bfs(src, dst):
                     if i not in prevPoints:
                         prevPoints[i] = []
                     prevPoints[i].append(now)
-
+    return True
 def getPaths(start, index):
     childPaths = []
     midPaths = []
@@ -271,10 +273,10 @@ def getPaths(start, index):
     return midPaths
 
 def return_valley_free_path(path_list):
-    all = []
+    all = set()
     for path in path_list:
         if is_valley_free(path):
-            all.append(path)
+            all.add(list2str(path))
     if len(all) != 0:
         return all
     else:
@@ -286,11 +288,13 @@ def main(as1, as2):
     # get_input_file("as_rel.txt", "all_links.txt", "as_links_rel_ori.txt")
     get_graph("as_links_rel_ori.txt")
     all_path = get_shortest_path(as1, as2)
-    print all_path
     if type(all_path) == str:
     # if 1:
-        bfs(as1, as2)
-        all_path = return_valley_free_path(getPaths(as1, as2))
+        ret = bfs(as1, as2)
+        if ret == True:
+            all_path = return_valley_free_path(getPaths(as1, as2))
+        else:
+            all_path = "no result"
     print all_path
   
 
